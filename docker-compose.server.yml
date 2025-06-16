@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgis/postgis
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust  # como respaldo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Monta el pg_hba.conf custom
+
+    networks:
+      - sced-server-net
+
+  mqtt:
+    image: eclipse-mosquitto
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+    networks:
+      - sced-server-net
+
+  backend:
+    build: ./backend
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    networks:
+      - sced-server-net
+
+  worker:
+    build: ./worker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+      - backend
+    networks:
+      - sced-server-net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sced-server-net
+
+networks:
+  sced-server-net:
+    driver: bridge

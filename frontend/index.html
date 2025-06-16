@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SCED Containers</title>
+    <style>
+      html, body, #root { margin: 0; height: 100vh; font-family: Arial, sans-serif; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+      th { background: #f0f0f0; }
+      .navbar { background: #2c3e50; color: #fff; padding: 10px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; }
+      .navbar button { margin-right: 10px; background: transparent; border: none; color: inherit; cursor: pointer; font-size: 16px; }
+      .navbar button.active { text-decoration: underline; }
+      .header-actions { margin-left: auto; }
+      .header-actions button { background: #3498db; border: none; color: #fff; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

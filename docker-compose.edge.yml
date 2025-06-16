@@ -1,0 +1,46 @@
+services:
+  processing_node:
+    build: ./processing-node
+    environment:
+      TZ: America/Santiago
+      CENTRAL_SERVER_URL: https://tk9hop-ip-190-114-41-247.tunnelmole.net/api/report  # <-- coherente con main.py
+    volumes:
+      - ./processing-node_volume:/db
+    ports:
+      - "5000:5000"
+    networks:
+      - sced-edge-net
+
+  sensor_simulator_c1a1:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-C001
+      SENSOR_ID: SENSOR-A001
+      SERVER_ADDR: http://processing_node:5000
+    networks:
+      - sced-edge-net
+
+  sensor_simulator_c1a2:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-C001
+      SENSOR_ID: SENSOR-A002
+      SERVER_ADDR: http://processing_node:5000
+    networks:
+      - sced-edge-net
+
+  sensor_simulator_c1a3:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-C001
+      SENSOR_ID: SENSOR-A003
+      SERVER_ADDR: http://processing_node:5000
+    networks:
+      - sced-edge-net
+
+networks:
+  sced-edge-net:
+    driver: bridge
