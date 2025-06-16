@@ -15,6 +15,11 @@ Clone the repository and start the stack:
 docker-compose up --build
 ```
 
+You can monitor service logs with:
+```bash
+docker-compose logs -f
+```
+
 ## Simulation
 Sensor readings can be published manually:
 ```bash

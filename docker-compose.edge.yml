@@ -10,6 +10,12 @@ services:
       - "5000:5000"
     networks:
       - sced-edge-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   sensor_simulator_c1a1:
     build: ./sensor-sim
@@ -20,6 +26,9 @@ services:
       SERVER_ADDR: http://processing_node:5000
     networks:
       - sced-edge-net
+    depends_on:
+      - processing_node
+    restart: unless-stopped
 
   sensor_simulator_c1a2:
     build: ./sensor-sim
@@ -30,6 +39,9 @@ services:
       SERVER_ADDR: http://processing_node:5000
     networks:
       - sced-edge-net
+    depends_on:
+      - processing_node
+    restart: unless-stopped
 
   sensor_simulator_c1a3:
     build: ./sensor-sim
@@ -40,6 +52,9 @@ services:
       SERVER_ADDR: http://processing_node:5000
     networks:
       - sced-edge-net
+    depends_on:
+      - processing_node
+    restart: unless-stopped
 
 networks:
   sced-edge-net:
