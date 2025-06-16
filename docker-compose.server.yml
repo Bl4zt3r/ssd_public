@@ -13,6 +13,12 @@ services:
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./database/pg_hba.conf:/etc/postgresql/pg_hba.conf  # Monta el pg_hba.conf custom
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
     networks:
       - sced-server-net
@@ -23,6 +29,12 @@ services:
       - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost 1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - sced-server-net
 
@@ -37,6 +49,12 @@ services:
       - db
     ports:
       - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/contenedores"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - sced-server-net
 
@@ -50,6 +68,12 @@ services:
     depends_on:
       - db
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "main.py"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - sced-server-net
 
@@ -59,6 +83,12 @@ services:
       - "3000:80"
     depends_on:
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - sced-server-net
 
