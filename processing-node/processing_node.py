@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 # --- Config ---
+NODE_ID = os.getenv("NODE_ID", "unkown")
 CENTRAL_SERVER_URL = os.getenv("CENTRAL_SERVER_URL", "http://central-server:8000/receive")
 TIMEZONE = os.getenv("TZ", "America/Santiago")
 TZ = pytz.timezone(TIMEZONE)
@@ -77,6 +78,7 @@ class Measurement(BaseModel):
     timestamp: int
 
 class SensorPacket(BaseModel):
+    container_id: str
     sensor_id: str
     measurements: List[Measurement]
 
@@ -89,10 +91,9 @@ async def push_data(packet: SensorPacket):
         sensor = db.query(Sensor).filter(Sensor.id == packet.sensor_id).first()
         if not sensor:
             logger.info(f"Sensor {packet.sensor_id} not found. Creating new sensor and container.")
-            container_id = f"container_{packet.sensor_id}"
-            if not db.query(Container).filter_by(id=container_id).first():
-                db.add(Container(id=container_id, type="simulated"))
-            sensor = Sensor(id=packet.sensor_id, container_id=container_id, installed_at=datetime.now(TZ))
+            if not db.query(Container).filter_by(id=packet.container_id).first():
+                db.add(Container(id=packet.container_id, type="generic"))
+            sensor = Sensor(id=packet.sensor_id, container_id=packet.container_id, installed_at=datetime.now(TZ))
             db.add(sensor)
             db.commit()
         for m in packet.measurements:
@@ -154,6 +155,7 @@ def aggregate_and_send():
             for entry in unsent:
                 try:
                     payload = {
+                        "node_id": NODE_ID,
                         "container_id": entry.container_id,
                         "timestamp": entry.timestamp.isoformat(),
                         "fill_level": entry.fill_level,
@@ -173,7 +175,7 @@ def aggregate_and_send():
         finally:
             db.close()
 
-        time.sleep(300)  # Every 5 minutes
+        time.sleep(60)  # Every 5 minutes
 
 # --- Start background thread ---
 threading.Thread(target=aggregate_and_send, daemon=True).start()

@@ -17,8 +17,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - sced-server-net
 
   mqtt:
     image: eclipse-mosquitto
@@ -26,8 +24,6 @@ services:
       - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
-    networks:
-      - sced-server-net
 
   worker:
     build: ./backend
@@ -42,8 +38,6 @@ services:
     depends_on:
       postgis:
         condition: service_healthy
-    networks:
-      - sced-server-net
 
   ingestor:
     build: ./backend
@@ -61,8 +55,6 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
-    networks:
-      - sced-server-net
 
   backend:
     build: ./backend
@@ -82,8 +74,6 @@ services:
         condition: service_started
     ports:
       - "8001:8001"
-    networks:
-      - sced-server-net
 
   frontend:
     build: ./frontend
@@ -94,9 +84,38 @@ services:
       - "3000:80"
     depends_on:
       - backend
-    networks:
-      - sced-server-net
 
-networks:
-  sced-server-net:
-    driver: bridge
+  processing_node:
+    build: ./processing-node
+    environment:
+      TZ: America/Santiago
+      NODE_ID: NODO-GR-001
+      CENTRAL_SERVER_URL: http://ingestor:8000/api/report
+    volumes:
+      - ./processing-node_volume:/db
+    ports:
+      - "5000:5000"
+
+  sensor_simulator_c1a1:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-GR-C001
+      SENSOR_ID: SENSOR-A001
+      SERVER_ADDR: http://processing_node:5000
+
+  sensor_simulator_c1a2:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-GR-C001
+      SENSOR_ID: SENSOR-A002
+      SERVER_ADDR: http://processing_node:5000
+
+  sensor_simulator_c1a3:
+    build: ./sensor-sim
+    environment:
+      TZ: America/Santiago
+      CONTAINER_ID: CONTENEDOR-GR-C001
+      SENSOR_ID: SENSOR-A003
+      SERVER_ADDR: http://processing_node:5000

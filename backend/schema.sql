@@ -1,21 +1,16 @@
--- Habilitar PostGIS si no existe
-CREATE EXTENSION IF NOT EXISTS postgis;
-
--- Tabla de datos de zonas (zones)
+-- === Schema Definitions ===
 CREATE TABLE IF NOT EXISTS zones (
     id TEXT PRIMARY KEY,
     name TEXT,
     boundary GEOGRAPHY(POLYGON)
 );
 
--- Tabla de datos de nodos de procesamiento (processor_nodes)
 CREATE TABLE IF NOT EXISTS processor_nodes (
     id TEXT PRIMARY KEY,
     zone_id TEXT REFERENCES zones(id),
     location GEOGRAPHY(POINT)
 );
 
--- Tabla de contenedores (containers)
 CREATE TABLE IF NOT EXISTS containers (
     id TEXT PRIMARY KEY,
     node_id TEXT REFERENCES processor_nodes(id),
@@ -25,7 +20,6 @@ CREATE TABLE IF NOT EXISTS containers (
     created_at TIMESTAMP
 );
 
--- Tabla de datos de nivel (level_data)
 CREATE TABLE IF NOT EXISTS level_data (
     id SERIAL PRIMARY KEY,
     node_id TEXT REFERENCES processor_nodes(id),
@@ -36,7 +30,6 @@ CREATE TABLE IF NOT EXISTS level_data (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de datos de lecturas (container_readings)
 CREATE TABLE IF NOT EXISTS container_readings (
     id SERIAL PRIMARY KEY,
     container_id TEXT REFERENCES containers(id),
@@ -45,6 +38,29 @@ CREATE TABLE IF NOT EXISTS container_readings (
     received_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices recomendados
-CREATE INDEX IF NOT EXISTS idx_level_data_timestamp ON level_data(timestamp);
-CREATE INDEX IF NOT EXISTS idx_containers_location ON containers USING GIST (location);
+-- === Sample Data Inserts ===
+
+-- Insert sample zone for Graneros
+INSERT INTO zones (id, name, boundary) VALUES
+('ZONA-GRANEROS-CL-VI', 'Graneros, O’Higgins, Chile',
+ ST_GeogFromText(
+   'POLYGON((' ||
+   '-70.7400 -34.0750, ' ||
+   '-70.7200 -34.0750, ' ||
+   '-70.7200 -34.0600, ' ||
+   '-70.7400 -34.0600, ' ||
+   '-70.7400 -34.0750))'
+ ))
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert one processor node within the zone
+INSERT INTO processor_nodes (id, zone_id, location) VALUES
+('NODO-GR-001', 'ZONA-GRANEROS-CL-VI',
+ ST_GeogFromText('POINT(-70.7300 -34.0675)'))
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert one container at the same location as the node
+INSERT INTO containers (id, node_id, zone_id, type, location, created_at) VALUES
+('CONTENEDOR-GR-C001', 'NODO-GR-001', 'ZONA-GRANEROS-CL-VI',
+ 'mixed', ST_GeogFromText('POINT(-70.7300 -34.0675)'), NOW())
+ON CONFLICT (id) DO NOTHING;
